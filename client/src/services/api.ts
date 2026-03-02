@@ -6,7 +6,7 @@ const api = axios.create({
 
 // ── Request: attach Bearer token ──────────────────────────────────────────
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -24,10 +24,10 @@ api.interceptors.response.use(
     if (status === 401 || status === 403) {
       // Only auto-redirect if we actually had a stored token
       // (avoids redirect loop on the /auth page itself)
-      const hasToken = Boolean(localStorage.getItem('token'));
+      const hasToken = Boolean(sessionStorage.getItem('token'));
       if (hasToken) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         // Hard redirect to login — easiest way to reset all React state
         window.location.href = '/auth';
       }

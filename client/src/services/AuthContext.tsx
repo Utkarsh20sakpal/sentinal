@@ -32,19 +32,20 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // ── Initialize synchronously from localStorage (no useEffect race condition) ──
+  // ── Initialize synchronously from sessionStorage (no useEffect race condition) ──
+  // sessionStorage is tab-isolated: each tab keeps its own login session.
   // Lazy initializer runs once on mount, BEFORE the first render — so ProtectedRoute
   // always has the correct user on the first paint and never redirects incorrectly.
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const stored = localStorage.getItem('user');
+      const stored = sessionStorage.getItem('user');
       return stored ? (JSON.parse(stored) as User) : null;
     } catch {
       return null;
     }
   });
 
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(() => sessionStorage.getItem('token'));
 
   // loading is false from the start because we initialise synchronously above.
   // We keep it in the context shape for API compatibility but it never blocks.
@@ -54,8 +55,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const persist = (userData: User, jwt: string) => {
     setUser(userData);
     setToken(jwt);
-    localStorage.setItem('token', jwt);
-    localStorage.setItem('user', JSON.stringify(userData));
+    sessionStorage.setItem('token', jwt);
+    sessionStorage.setItem('user', JSON.stringify(userData));
   };
 
   const login = async (email: string, password: string) => {
@@ -76,8 +77,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
   };
 
   return (
