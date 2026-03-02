@@ -51,7 +51,9 @@ export const GlowCard = ({ children, className, glowColor = 'cyan' }: { children
                 glow[glowColor],
                 className,
             )}
-        />
+        >
+            {children}
+        </motion.div>
     );
 };
 
