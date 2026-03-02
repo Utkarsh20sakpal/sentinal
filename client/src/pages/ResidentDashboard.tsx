@@ -39,10 +39,8 @@ const ResidentDashboard = () => {
     setLoading(true);
     try {
       const res = await api.get<Visitor[]>('/visitors');
-      const myVisitors = user?.flatNumber
-        ? res.data.filter((v) => v.flatNumber === user.flatNumber)
-        : res.data;
-      setVisitors(myVisitors);
+      // Server already scopes results to this resident's flat — no client filter needed
+      setVisitors(res.data);
     } catch {
       push({ type: 'error', title: 'Failed to load visitor requests' });
     } finally {
@@ -51,18 +49,21 @@ const ResidentDashboard = () => {
   };
 
   useEffect(() => {
-    if (user?.flatNumber) joinFlatRoom(user.flatNumber);
+    // user.fullFlat = "A-803" — must match the server room name "flat-A-803"
+    const flatRoom = user?.fullFlat ?? null;
+    if (flatRoom) joinFlatRoom(flatRoom);
     loadVisitors();
     const s = getSocket();
     s.on('visitorRequest', (payload: any) => {
-      if (payload.flatNumber === user?.flatNumber) {
+      // payload.flatNumber is "A-803", user.fullFlat is "A-803" — correct match
+      if (payload.flatNumber === flatRoom) {
         push({ type: 'info', title: `🔔 New visitor: ${payload.name}`, body: payload.purpose });
         loadVisitors();
       }
     });
     s.on('visitorEntered', () => { loadVisitors(); });
     return () => { s.off('visitorRequest'); s.off('visitorEntered'); };
-  }, [user?.flatNumber]);
+  }, [user?.fullFlat]);
 
   const decide = async (id: string, action: 'approve' | 'reject') => {
     setDeciding(id);
